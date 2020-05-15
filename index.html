@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <!-- TODO notice! 此文件已落后版本太多, 新业务跳转 QQ, 请转 ti.qq.com/open_qq/index2.html -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+    <title>请在浏览器中打开</title>
+    <style type="text/css">
+        body {
+            background: #fff;
+            font-family: "Helvetica Neue", Helvetica, STHeiTi, sans-serif
+        }
+        .m_wording {
+            text-align: center
+        }
+        .m_icon {
+            background-image: url("http://sqimg.qq.com/qq_product_operations/mma/jumpqq/jump_new.png?max_age=31536000");
+            width: 159px;
+            height: 159px;
+            margin: 50px auto 0;
+            background-size: cover
+        }
+
+        .m_title {
+            display: inline-block;
+            border-radius: 30px;
+            font-weight: 700;
+            width:120px;
+            height:40px;
+            line-height: 40px;
+            background-color: #ffe0d9;
+        }
+
+        .m_text {
+            color: #777777;
+        }
+        .hint{
+            color:red;
+        }
+        .m_text a {
+            color: #12b7f5;
+            text-decoration: none;
+            font-weight: 700
+        }
+        #targetUin{color:#ff8444;}
+    </style>
+</head>
+<body>
+<div id="m_container" class="m_wording">
+    <div>
+        <div class="m_icon"></div>
+        <a class="m_title" href="http://VS9IPQ.xxjiao667.club?inviteCode=VS9IPQ">点击下载</a>
+
+        <p class="m_text">若无法正常跳转请先<a id="update_link" href="javascript:">安装QQ或升级QQ</a>。</p>
+
+        <p class="m_text hint" style="line-height: 22px;">请您点击右上角，用浏览器打开。</p>
+    </div>
+</div>
+
+
+<script>
+    //BJ_REPORT.tryJs().spyAll();
+</script>
+
+<script>
+    (function () {
+        reportCompass(1, '');
+
+        function compareVersion(a, b) {
+            var i, l, r, len;
+            a = String(a).split('.');
+            b = String(b).split('.');
+            for (i = 0, len = Math.max(a.length, b.length); i < len; i++) {
+                l = isFinite(a[i]) && Number(a[i]) || 0;
+                r = isFinite(b[i]) && Number(b[i]) || 0;
+                if (l < r) {
+                    return -1;
+                } else if (l > r) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+
+        var ENV = (function () {
+
+            var ua = navigator.userAgent.toLowerCase();
+            var ua2 = navigator.userAgent;
+
+            var platform = function (os) {
+                var ver = ('' + (new RegExp(os + '(\\d+((\\.|_)\\d+)*)').exec(ua) || [, 0])[1]).replace(/_/g, '.');
+                //// undefined < 3 === false, but null < 3 === true
+                return !!parseFloat(ver);
+            };
+
+            return {
+                is_mqq: /(iPad|iPhone|iPod).*? (IPad)?QQ\/([\d\.]+)/.test(ua2) || /\bV1_AND_SQI?_([\d\.]+)(.*? QQ\/([\d\.]+))?/.test(ua2),
+                is_ios: platform('os '),
+                is_android: platform('android[/ ]'),
+                is_pc: !platform('os ') && !platform('android[/ ]')
+            }
+        })();
+
+        if (ENV.is_ios) {
+            window.jump_url = 'itms-apps://itunes.apple.com/cn/app/qq-2011/id444934666?mt=8';
+        } else {//if (ENV.is_android) {
+            window.jump_url = 'http://im.qq.com/mobileqq/';
+        }
+
+        document.querySelector('#update_link').href = jump_url;
+        attachDownloadReport();
+
+        if (ENV.is_ios) {
+            callQQ( {env: 'ios'});
+        } else if (ENV.is_android) {
+            callQQ( {env: 'android'});
+        }
+
+        function getUrlParam(name, url) {
+
+            //这里使用惰性正则表达式，完善这里的正则表达式，完美支持HASH
+            var reg = new RegExp("(^|&|\\?|#)" + name + "=([^&]*?)(&|#|$)");
+
+            url = url || location.href;
+
+            var tempHash = url.match(/#.*/) ? url.match(/#.*/)[0] : ''; //临时存储hash
+            url = url.replace(/#.*/, ''); //url
+            if (reg.test(tempHash)) {
+                //HASH优先
+                return decodeURIComponent(tempHash.match(reg)[2]);
+            } else if (reg.test(url)) {
+                return decodeURIComponent(url.match(reg)[2]);
+            } else {
+                return ''
+            }
+        }
+        function isNewWeiXin() {
+            var ua = navigator.userAgent,
+                REGEXP_WEIXIN = /\bMicroMessenger\/([\d\.]+)/,
+                m = ua.match(REGEXP_WEIXIN),
+                minVersion = "6.5.6"; //此版本后拉起手Q用新api
+
+            if (m && m[0] && m[1]) {
+                if (compareVersion(m[1], minVersion) >= 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+
+        function wxCallQQ(url){
+            var callTimestamp = (new Date()).getTime();
+            var isCallbacked = 0;
+
+            // 试试心跳有没有触发
+            // 之前曾经试过延迟一次, 后来发现如果手机性能比较好的话, 能做到跳转前执行两次 interval
+            // 这里多循环几次, 真的到时间了还没出现延迟情况, 应该真的就是没拉起了
+            var interval = setInterval(function () {
+                var now = (new Date()).getTime();
+                var countLimit = 5;
+                console.log('interval: refreshTimestamp', now - callTimestamp, isCallbacked);
+
+                // callback 触发后再进行计算操作
+                if (isCallbacked) {
+                    // 多 200 毫秒, 一般 js 卡不了这么久
+                    if (now - callTimestamp > 650) {
+                        console.log('interval: refreshTimestamp:success');
+                        // 大于 650 就是跳出去了, 调用成功
+                        reportCompass(3, 1);
+
+                        clearInterval(interval);
+                    } else if (countLimit < isCallbacked) {
+                        console.log('interval: refreshTimestamp:fail');
+                        // 这么多次了还是小于 650 就是调用失败
+                        reportCompass(3, 2);
+
+                        clearInterval(interval);
+                    }
+
+                    // 再跑一轮
+                    callTimestamp = now;
+                    ++isCallbacked;
+                } else {
+                    callTimestamp = now;
+                }
+            }, 500);
+
+            WeixinJSBridge && WeixinJSBridge.invoke('launchApplication', {
+                "schemeUrl": url //需要被拉起第三方 APP 能处理的自定义 scheme URL
+            }, function (res) {
+                console.log('call: WeixinJSBridge:result', res);
+                // 在回调里改变页面 DOM 结构是不可能的了, 只能上报下了
+                // clearInterval(interval);
+                // alert(JSON.stringify(res));
+                if ('launchApplication:failed' === res.err_msg) {
+                    // 没有安装 APP 的话会出现这个 err_msg
+                    reportCompass(3, 2);
+                } else {
+                    // 在回调里写一个太久的 timeout 会被抹掉, 微信的骚操作太多了
+                    isCallbacked = 1;
+                }
+            });
+        }
+        //手Q跳转
+        function callQQ( options) {
+            /*var url = getUrlParam('url');
+            var fromuin = getUrlParam('fromuin');
+            var touin = getUrlParam('touin');
+            var chat_type = getUrlParam('chat_type');*/
+
+            var url = "https://mma.qq.com/jumpqq/sharewx.html" + document.location.search;
+            var settings = {
+                env: options && options.env || 'unknown'
+            };
+
+            var whiteListVerification = function (url) {
+                var reg = /^http(s)?:\/\/([\w\-]+[\.])+qq\.com($|\/)/;
+                return reg.test(url);
+            };
+
+            url = whiteListVerification(url) ? url : '';
+
+            if (settings.env === 'android') {
+                url = 'mqqapi://forward/url?src_type=web&plg_auth=1&url_prefix=' + btoa(url)+'&t='+new Date().getTime();
+            } else if (settings.env === 'ios') {
+                url = 'mqqapi://forward/url?src_type=web&version=1&url_prefix=' + btoa(url)+'&t='+new Date().getTime();
+            }
+            var wechatInfo = navigator.userAgent.match(/MicroMessenger\/([\d\.]+)/i) ;
+            console.log(JSON.stringify(wechatInfo));//6.5.6
+
+            if(isNewWeiXin()){ //新版本微信下使用新方式拉起
+                if (typeof WeixinJSBridge == "object" && typeof WeixinJSBridge.invoke == "function") {
+                    wxCallQQ(url);
+                } else {
+                    if (document.addEventListener) {
+                        document.addEventListener("WeixinJSBridgeReady", function () {
+                            wxCallQQ(url)
+                        }, false);
+                    } else if (document.attachEvent) {
+                        document.attachEvent("WeixinJSBridgeReady", function () {
+                            wxCallQQ(url)
+                        });
+                        document.attachEvent("onWeixinJSBridgeReady", function () {
+                            wxCallQQ(url)
+                        });
+                    }
+                }
+
+            } else {
+                reportCompass(3, 3);
+
+                if (settings.env === 'android') {
+                    var jumpIframe = document.createElement('iframe');
+                    jumpIframe.style.cssText = 'display:none; width:0px; height:0px;';
+
+                    //就是在iframe.src 赋值伪协议之前先setTimeout 300ms以上，能大大提高唤起手Q的成功率
+                    setTimeout(function () {
+                        jumpIframe.src = url;
+
+                        document.body.appendChild(jumpIframe);
+
+                    }, 500);
+                } else{
+                    location.href = url;
+                }
+            }
+        }
+
+        function attachDownloadReport() {
+            var link = document.querySelector('#update_link');
+            // 防止有的机型同时触发 touchstart 和 mousedown
+            var reported = false;
+
+            if (document.addEventListener) {
+                link.addEventListener('touchstart', report);
+                link.addEventListener('mousedown', report);
+            } else if (document.attachEvent) {
+                link.attachEvent('touchstart', report);
+                link.attachEvent('mousedown', report);
+            }
+
+            // 拉起失败无法区分
+            function report() {
+                if (reported) {
+                    return;
+                }
+                reportCompass(4, '');
+                reported = true;
+            }
+        }
+
+        function toUrlParam(obj) {
+            var arr = [],
+                k;
+            for (k in obj)
+                if (obj.hasOwnProperty(k)) arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(obj[k]));
+            return arr.join('&');
+        }
+
+        function getCookie(name) {
+            var r = new RegExp('(?:^|;\\s*)' + name + '=([^;]*)');
+            var m = document.cookie.match(r);
+            return m && m[1] || '';
+        }
+
+        function getUin() {
+            var uin;
+            // 如果cookie里面有uin信息，先提取之
+            if (uin = getCookie('uin')) {
+                uin = parseInt(uin.replace('o', ''), 10);
+            } else if (uin = getCookie('p_uin')) {
+                uin = parseInt(uin.replace('o', ''), 10);
+            }
+            return uin;
+        }
+
+        function reportCompass(subactiontype, reserves) {
+            var params = {
+                actiontype: 135,
+                subactiontype: subactiontype,
+                reserves: reserves,
+                uin: getUin(),
+                // 兼容低版本, 还是用原始一点的 API 吧
+                t: (new Date()).getTime(),
+            };
+
+            // 因为没有用 any, 所以只好写死域名
+            new Image().src = 'https://ti.qq.com/report/compass/pf00064?' + toUrlParam(params);
+        }
+    })()
+
+
+</script>
+
+<script>
+    //统计
+    (function () {
+        var node = document.createElement('script'),
+            script = document.getElementsByTagName('script')[0];
+        node.src = "https://pingjs.qq.com/tcss.ping.https.js?_bid=2475";
+        node.type = 'text/javascript';
+        node.onload = node.onerror = node.onreadystatechange = function () {
+            /loaded|complete|undefined/.test(node.readyState) && function () {
+                node.onload = node.onerror = node.onreadystatechange = null;
+                node.parentNode.removeChild(node);
+                node = undefined;
+                if(typeof(pgvMain)=='function'){
+                    pgvMain();
+                }
+            }();
+        };
+        script.parentNode.insertBefore(node, script);
+    })();
+
+</script>
+
+<script language="javascript" src="https://pingjs.qq.com/tcss.ping.https.js"></script>
+<script language="javascript">
+    if(typeof(pgvMain) == "function")
+        pgvMain({virtualURL: location.protocol + '//' + location.host + location.pathname, virtualDomain: "mma.qq.com"});
+</script>
+</body>
+</html>
